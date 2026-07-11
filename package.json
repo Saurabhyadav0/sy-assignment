@@ -1,0 +1,21 @@
+{
+  "name": "groweasy-ai-csv-importer",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "concurrently \"npm run dev --workspace backend\" \"npm run dev --workspace frontend\"",
+    "build": "npm run build --workspace backend && npm run build --workspace frontend",
+    "lint": "npm run lint --workspace frontend",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  },
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "overrides": {
+    "postcss": "^8.5.10"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
