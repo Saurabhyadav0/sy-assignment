@@ -156,8 +156,8 @@ export function extractWithHeuristics(rows: CsvRecord[]) {
       email: emails[0] ?? "",
       country_code: findValue(row, ["countrycode", "dialcode"]) || phoneParts.country_code,
       mobile_without_country_code:
-        findValue(row, ["mobile", "phone", "whatsapp", "contactnumber", "number"]).replace(/\D/g, "").slice(-10) ||
-        phoneParts.mobile_without_country_code,
+        phoneParts.mobile_without_country_code ||
+        findValue(row, ["mobile", "phone", "whatsapp", "contactnumber", "number"]).replace(/\D/g, "").slice(-10),
       company: findValue(row, ["company", "organisation", "organization", "business", "employer"]),
       city: findValue(row, ["city", "location", "town"]),
       state: findValue(row, ["state", "province", "region"]),
