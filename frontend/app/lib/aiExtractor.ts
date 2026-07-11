@@ -117,14 +117,22 @@ async function withRetry<T>(fn: () => Promise<T>, attempts = 3): Promise<T> {
 }
 
 async function extractBatchGemini(apiKey: string, model: string, batch: Array<{ index: number; row: CsvRecord }>) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+  const isToken = apiKey.startsWith("AQ.") || apiKey.length > 60;
+  const url = isToken
+    ? `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`
+    : `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json"
+  };
+  if (isToken) {
+    headers["Authorization"] = `Bearer ${apiKey}`;
+  }
 
   const response = await withRetry(async () => {
     const res = await fetch(url, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
+      headers,
       body: JSON.stringify({
         contents: [
           {
