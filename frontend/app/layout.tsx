@@ -17,5 +17,3 @@ export default function RootLayout({
     </html>
   );
 }
-git config --local user.name "Saurabh yadav"
-git config --local user.email "saurabh7678944135gzp@gmail.com"  # <- Replace with your personal email
