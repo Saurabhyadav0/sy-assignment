@@ -73,4 +73,31 @@ describe("POST /api/import Route Handler", () => {
       mobile_without_country_code: "9876543210"
     });
   });
+
+  it("should process JSON payload of rows on valid request", async () => {
+    const payload = {
+      rows: [
+        { name: "JSON User", email: "json@example.com", phone: "5556667777" }
+      ]
+    };
+
+    const req = new NextRequest("http://localhost:3000/api/import", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const response = await POST(req);
+    expect(response.status).toBe(200);
+
+    const body = await response.json();
+    expect(body.totalImported).toBe(1);
+    expect(body.records[0]).toEqual({
+      name: "JSON User",
+      email: "json@example.com",
+      mobile_without_country_code: "5556667777"
+    });
+  });
 });

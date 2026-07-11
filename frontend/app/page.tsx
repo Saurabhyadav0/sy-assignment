@@ -122,6 +122,7 @@ export default function Home() {
   const [isDragging, setIsDragging] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [result, setResult] = useState<ImportResponse | null>(null);
+  const [importProgress, setImportProgress] = useState<{ current: number; total: number } | null>(null);
 
   const previewRows = useMemo(() => rows.slice(0, 100), [rows]);
 
@@ -131,6 +132,7 @@ export default function Home() {
     setColumns([]);
     setResult(null);
     setError("");
+    setImportProgress(null);
     if (inputRef.current) inputRef.current.value = "";
   }
 
@@ -183,31 +185,77 @@ export default function Home() {
   }
 
   async function confirmImport() {
-    if (!file) return;
+    if (rows.length === 0) return;
 
     setIsImporting(true);
     setError("");
     setResult(null);
+    setImportProgress({ current: 0, total: rows.length });
 
-    const formData = new FormData();
-    formData.append("file", file);
+    const batchSize = 20;
+    const allRecords: CrmRecord[] = [];
+    const allSkipped: SkippedRecord[] = [];
+    let finalUsedAi = false;
 
     try {
-      const response = await fetch(`${apiBase}/api/import`, {
-        method: "POST",
-        body: formData
-      });
-      const body = await response.json();
+      for (let i = 0; i < rows.length; i += batchSize) {
+        const chunk = rows.slice(i, i + batchSize);
 
-      if (!response.ok) {
-        throw new Error(body.error || "Import failed.");
+        let response: Response | null = null;
+        let lastError: Error | null = null;
+        const attempts = 3;
+
+        for (let attempt = 1; attempt <= attempts; attempt++) {
+          try {
+            response = await fetch(`${apiBase}/api/import`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify({ rows: chunk })
+            });
+            if (response.ok) {
+              lastError = null;
+              break;
+            } else {
+              const errBody = await response.json().catch(() => ({}));
+              lastError = new Error(errBody.error || `Batch ${Math.floor(i / batchSize) + 1} failed with status ${response.status}`);
+            }
+          } catch (err: any) {
+            lastError = err instanceof Error ? err : new Error(err?.message || "Connection error");
+          }
+
+          if (attempt < attempts) {
+            await new Promise((resolve) => setTimeout(resolve, 500 * attempt));
+          }
+        }
+
+        if (lastError || !response || !response.ok) {
+          throw lastError || new Error("Batch processing failed.");
+        }
+
+        const body: ImportResponse = await response.json();
+        allRecords.push(...body.records);
+        allSkipped.push(...body.skipped);
+        if (body.usedAi) {
+          finalUsedAi = true;
+        }
+
+        setImportProgress({ current: Math.min(i + batchSize, rows.length), total: rows.length });
       }
 
-      setResult(body);
+      setResult({
+        records: allRecords,
+        skipped: allSkipped,
+        totalImported: allRecords.length,
+        totalSkipped: allSkipped.length,
+        usedAi: finalUsedAi
+      });
     } catch (importError) {
       setError(importError instanceof Error ? importError.message : "Import failed.");
     } finally {
       setIsImporting(false);
+      setImportProgress(null);
     }
   }
 
@@ -281,9 +329,19 @@ export default function Home() {
         )}
 
         {isImporting && (
-          <div className="progress">
-            <Loader2 className="spin" size={20} />
-            <span>Mapping messy columns into GrowEasy CRM fields...</span>
+          <div className="progress" style={{ flexDirection: "column", alignItems: "stretch", gap: "10px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <Loader2 className="spin" size={20} />
+              <span>
+                Mapping messy columns into GrowEasy CRM fields... 
+                {importProgress ? ` (${importProgress.current} / ${importProgress.total} rows)` : ""}
+              </span>
+            </div>
+            {importProgress && (
+              <div style={{ width: "100%", height: "6px", background: "rgba(245, 184, 75, 0.2)", borderRadius: "3px", overflow: "hidden", marginTop: "4px" }}>
+                <div style={{ width: `${(importProgress.current / importProgress.total) * 100}%`, height: "100%", background: "var(--warning)", transition: "width 0.2s ease" }}></div>
+              </div>
+            )}
           </div>
         )}
 

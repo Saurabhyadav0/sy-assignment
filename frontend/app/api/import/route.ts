@@ -5,15 +5,23 @@ import type { ImportResponse } from "../../lib/types";
 
 export async function POST(request: NextRequest) {
   try {
-    const formData = await request.formData();
-    const file = formData.get("file");
+    let rows: any[] = [];
+    const contentType = request.headers.get("content-type") || "";
 
-    if (!file || !(file instanceof File)) {
-      return NextResponse.json({ error: "CSV file is required" }, { status: 400 });
+    if (contentType.includes("application/json")) {
+      const jsonBody = await request.json();
+      rows = jsonBody.rows || [];
+    } else {
+      const formData = await request.formData();
+      const file = formData.get("file");
+
+      if (!file || !(file instanceof File)) {
+        return NextResponse.json({ error: "CSV file is required" }, { status: 400 });
+      }
+
+      const buffer = Buffer.from(await file.arrayBuffer());
+      rows = parseCsv(buffer);
     }
-
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const rows = parseCsv(buffer);
 
     if (rows.length === 0) {
       return NextResponse.json({ error: "CSV did not contain any data rows" }, { status: 400 });
