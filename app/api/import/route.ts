@@ -27,7 +27,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "CSV did not contain any data rows" }, { status: 400 });
     }
 
-    const extraction = await extractLeads(rows);
+    const provider = request.headers.get("x-ai-provider") || undefined;
+    const openAiApiKey = request.headers.get("x-openai-api-key") || undefined;
+    const geminiApiKey = request.headers.get("x-gemini-api-key") || undefined;
+
+    const extraction = await extractLeads(rows, {
+      provider,
+      openAiApiKey,
+      geminiApiKey
+    });
     const body: ImportResponse = {
       records: extraction.records,
       skipped: extraction.skipped,

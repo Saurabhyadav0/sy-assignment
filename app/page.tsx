@@ -1,16 +1,17 @@
 "use client";
 
-import { ChangeEvent, DragEvent, useMemo, useRef, useState } from "react";
+import { ChangeEvent, DragEvent, useEffect, useMemo, useRef, useState } from "react";
 import Papa from "papaparse";
 import {
   AlertCircle,
   CheckCircle2,
   FileSpreadsheet,
   Loader2,
-  Moon,
+  Settings,
   RefreshCw,
   Upload,
-  XCircle
+  XCircle,
+  Cpu
 } from "lucide-react";
 
 type CsvRow = Record<string, string>;
@@ -124,6 +125,40 @@ export default function Home() {
   const [result, setResult] = useState<ImportResponse | null>(null);
   const [importProgress, setImportProgress] = useState<{ current: number; total: number } | null>(null);
 
+  // Settings State
+  const [provider, setProvider] = useState<"openai" | "gemini">("openai");
+  const [openAiKey, setOpenAiKey] = useState("");
+  const [geminiKey, setGeminiKey] = useState("");
+  const [showSettings, setShowSettings] = useState(false);
+
+  // Load settings on mount
+  useEffect(() => {
+    const savedProvider = localStorage.getItem("crm_ai_provider");
+    const savedOpenAiKey = localStorage.getItem("crm_openai_key");
+    const savedGeminiKey = localStorage.getItem("crm_gemini_key");
+
+    if (savedProvider === "openai" || savedProvider === "gemini") {
+      setProvider(savedProvider);
+    }
+    if (savedOpenAiKey) setOpenAiKey(savedOpenAiKey);
+    if (savedGeminiKey) setGeminiKey(savedGeminiKey);
+  }, []);
+
+  const handleProviderChange = (val: "openai" | "gemini") => {
+    setProvider(val);
+    localStorage.setItem("crm_ai_provider", val);
+  };
+
+  const handleOpenAiKeyChange = (val: string) => {
+    setOpenAiKey(val);
+    localStorage.setItem("crm_openai_key", val);
+  };
+
+  const handleGeminiKeyChange = (val: string) => {
+    setGeminiKey(val);
+    localStorage.setItem("crm_gemini_key", val);
+  };
+
   const previewRows = useMemo(() => rows.slice(0, 100), [rows]);
 
   function resetImport() {
@@ -210,7 +245,10 @@ export default function Home() {
             response = await fetch(`${apiBase}/api/import`, {
               method: "POST",
               headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "x-ai-provider": provider,
+                "x-openai-api-key": openAiKey,
+                "x-gemini-api-key": geminiKey
               },
               body: JSON.stringify({ rows: chunk })
             });
@@ -266,10 +304,64 @@ export default function Home() {
           <p className="eyebrow">GrowEasy CRM</p>
           <h1>AI CSV Importer</h1>
         </div>
-        <button className="icon-button" aria-label="Dark mode enabled" title="Dark mode enabled">
-          <Moon size={18} />
+        <button 
+          className={`icon-button ${showSettings ? "primary" : ""}`} 
+          type="button" 
+          onClick={() => setShowSettings(!showSettings)}
+          title="Configure AI API credentials"
+          aria-label="Toggle settings panel"
+        >
+          <Settings size={18} className={isImporting ? "spin" : ""} />
         </button>
       </section>
+
+      {showSettings && (
+        <section className="settings-drawer panel">
+          <h3>
+            <Cpu size={18} style={{ color: "var(--accent)" }} />
+            AI Pipeline Settings
+          </h3>
+          <p>Configure model endpoints and input custom API keys overrides dynamically. Unset fields will use server-side credentials.</p>
+          
+          <div className="settings-grid">
+            <div className="settings-group">
+              <label htmlFor="ai-provider-select">Active AI Provider</label>
+              <select 
+                id="ai-provider-select" 
+                value={provider} 
+                onChange={(e) => handleProviderChange(e.target.value as "openai" | "gemini")}
+              >
+                <option value="openai">OpenAI (gpt-4o-mini)</option>
+                <option value="gemini">Google Gemini (gemini-2.5-flash)</option>
+              </select>
+            </div>
+
+            {provider === "openai" ? (
+              <div className="settings-group">
+                <label htmlFor="openai-key-input">OpenAI API Key Override</label>
+                <input 
+                  id="openai-key-input" 
+                  type="password" 
+                  placeholder="sk-proj-..." 
+                  value={openAiKey}
+                  onChange={(e) => handleOpenAiKeyChange(e.target.value)}
+                />
+              </div>
+            ) : (
+              <div className="settings-group">
+                <label htmlFor="gemini-key-input">Gemini API Key Override</label>
+                <input 
+                  id="gemini-key-input" 
+                  type="password" 
+                  placeholder="AQ.Ab8RN... or AIzaSy..." 
+                  value={geminiKey}
+                  onChange={(e) => handleGeminiKeyChange(e.target.value)}
+                />
+              </div>
+            )}
+          </div>
+        </section>
+      )}
 
       <section className="workspace">
         <div className="panel upload-panel">

@@ -196,13 +196,16 @@ async function extractBatch(client: OpenAI, model: string, batch: Array<{ index:
   return aiResponseSchema.parse(JSON.parse(content));
 }
 
-export async function extractLeads(rows: CsvRecord[]) {
-  const provider = process.env.AI_PROVIDER || (process.env.GEMINI_API_KEY ? "gemini" : "openai");
+export async function extractLeads(
+  rows: CsvRecord[],
+  options?: { provider?: string; openAiApiKey?: string; geminiApiKey?: string }
+) {
+  const provider = options?.provider || process.env.AI_PROVIDER || ((options?.geminiApiKey || process.env.GEMINI_API_KEY) ? "gemini" : "openai");
   const records: CrmRecord[] = [];
   const skipped: SkippedRecord[] = [];
 
   if (provider === "gemini") {
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = options?.geminiApiKey || process.env.GEMINI_API_KEY;
     const model = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 
     if (!apiKey) {
@@ -223,7 +226,7 @@ export async function extractLeads(rows: CsvRecord[]) {
       return { ...extractWithHeuristics(rows), usedAi: false };
     }
   } else {
-    const apiKey = process.env.OPENAI_API_KEY;
+    const apiKey = options?.openAiApiKey || process.env.OPENAI_API_KEY;
     const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
 
     if (!apiKey) {
