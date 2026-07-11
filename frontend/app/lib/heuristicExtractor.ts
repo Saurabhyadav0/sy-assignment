@@ -1,5 +1,5 @@
-import type { CrmRecord, CsvRecord, SkippedRecord } from "./types.js";
-import { dataSources } from "./types.js";
+import type { CrmRecord, CsvRecord, SkippedRecord } from "./types";
+import { dataSources } from "./types";
 
 const emptyRecord: CrmRecord = {
   created_at: "",

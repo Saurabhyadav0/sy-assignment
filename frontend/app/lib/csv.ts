@@ -1,5 +1,5 @@
 import { parse } from "csv-parse/sync";
-import type { CsvRecord } from "./types.js";
+import type { CsvRecord } from "./types";
 
 export function parseCsv(buffer: Buffer): CsvRecord[] {
   const text = buffer.toString("utf8").replace(/^\uFEFF/, "");

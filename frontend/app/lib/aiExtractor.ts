@@ -1,7 +1,7 @@
 import OpenAI from "openai";
 import { z } from "zod";
-import { extractWithHeuristics } from "./heuristicExtractor.js";
-import { crmStatuses, dataSources, type CrmRecord, type CsvRecord, type SkippedRecord } from "./types.js";
+import { extractWithHeuristics } from "./heuristicExtractor";
+import { crmStatuses, dataSources, type CrmRecord, type CsvRecord, type SkippedRecord } from "./types";
 
 const crmRecordSchema = z.object({
   created_at: z.string().default(""),

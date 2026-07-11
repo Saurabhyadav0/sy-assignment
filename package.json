@@ -3,14 +3,13 @@
   "private": true,
   "version": "1.0.0",
   "scripts": {
-    "dev": "concurrently \"npm run dev --workspace backend\" \"npm run dev --workspace frontend\"",
-    "build": "npm run build --workspace backend && npm run build --workspace frontend",
+    "dev": "npm run dev --workspace frontend",
+    "build": "npm run build --workspace frontend",
     "lint": "npm run lint --workspace frontend",
-    "typecheck": "npm run typecheck --workspaces --if-present"
+    "typecheck": "npm run typecheck --workspace frontend"
   },
   "workspaces": [
-    "frontend",
-    "backend"
+    "frontend"
   ],
   "overrides": {
     "postcss": "^8.5.10"

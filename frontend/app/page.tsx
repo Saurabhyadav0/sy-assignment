@@ -65,7 +65,7 @@ const crmColumns: Array<keyof CrmRecord> = [
   "description"
 ];
 
-const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
+const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "";
 
 function Table({
   columns,
