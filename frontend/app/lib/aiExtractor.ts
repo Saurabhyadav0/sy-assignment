@@ -147,7 +147,10 @@ export async function extractLeads(rows: CsvRecord[]) {
     return { ...extractWithHeuristics(rows), usedAi: false };
   }
 
-  const client = new OpenAI({ apiKey });
+  const client = new OpenAI({
+    apiKey,
+    project: process.env.OPENAI_PROJECT_ID || undefined
+  });
   const records: CrmRecord[] = [];
   const skipped: SkippedRecord[] = [];
 
