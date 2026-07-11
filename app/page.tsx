@@ -2,6 +2,7 @@
 
 import { ChangeEvent, DragEvent, useEffect, useMemo, useRef, useState } from "react";
 import Papa from "papaparse";
+import toast from "react-hot-toast";
 import {
   AlertCircle,
   CheckCircle2,
@@ -289,8 +290,16 @@ export default function Home() {
         totalSkipped: allSkipped.length,
         usedAi: finalUsedAi
       });
+
+      toast.success(
+        `Import completed! Successfully imported ${allRecords.length} records${
+          allSkipped.length > 0 ? `, skipped ${allSkipped.length}` : ""
+        }.`
+      );
     } catch (importError) {
-      setError(importError instanceof Error ? importError.message : "Import failed.");
+      const errMsg = importError instanceof Error ? importError.message : "Import failed.";
+      setError(errMsg);
+      toast.error(errMsg);
     } finally {
       setIsImporting(false);
       setImportProgress(null);

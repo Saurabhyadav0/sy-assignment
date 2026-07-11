@@ -9,9 +9,6 @@
     "typecheck": "node node_modules/typescript/bin/tsc -p tsconfig.json --noEmit",
     "test": "node node_modules/vitest/vitest.mjs run"
   },
-  "overrides": {
-    "postcss": "^8.5.10"
-  },
   "dependencies": {
     "@types/papaparse": "^5.3.15",
     "csv-parse": "^5.6.0",
@@ -22,6 +19,7 @@
     "postcss": "^8.5.16",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-hot-toast": "^2.6.0",
     "zod": "^3.24.1"
   },
   "devDependencies": {
