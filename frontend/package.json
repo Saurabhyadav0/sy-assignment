@@ -3,11 +3,11 @@
   "private": true,
   "version": "1.0.0",
   "scripts": {
-    "dev": "node node_modules/next/dist/bin/next dev",
-    "build": "node node_modules/next/dist/bin/next build",
-    "start": "node node_modules/next/dist/bin/next start",
-    "typecheck": "node node_modules/typescript/bin/tsc -p tsconfig.json --noEmit",
-    "test": "node node_modules/vitest/vitest.mjs run"
+    "dev": "node ../node_modules/next/dist/bin/next dev",
+    "build": "node ../node_modules/next/dist/bin/next build",
+    "start": "node ../node_modules/next/dist/bin/next start",
+    "typecheck": "node ../node_modules/typescript/bin/tsc -p tsconfig.json --noEmit",
+    "test": "node ../node_modules/vitest/vitest.mjs run"
   },
   "dependencies": {
     "@types/papaparse": "^5.3.15",
