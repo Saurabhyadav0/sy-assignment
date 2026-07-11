@@ -12,7 +12,9 @@ import {
   RefreshCw,
   Upload,
   XCircle,
-  Cpu
+  Cpu,
+  Sun,
+  Moon
 } from "lucide-react";
 
 type CsvRow = Record<string, string>;
@@ -131,19 +133,32 @@ export default function Home() {
   const [openAiKey, setOpenAiKey] = useState("");
   const [geminiKey, setGeminiKey] = useState("");
   const [showSettings, setShowSettings] = useState(false);
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
 
   // Load settings on mount
   useEffect(() => {
     const savedProvider = localStorage.getItem("crm_ai_provider");
     const savedOpenAiKey = localStorage.getItem("crm_openai_key");
     const savedGeminiKey = localStorage.getItem("crm_gemini_key");
+    const savedTheme = localStorage.getItem("crm_theme") as "dark" | "light" | null;
 
     if (savedProvider === "openai" || savedProvider === "gemini") {
       setProvider(savedProvider);
     }
     if (savedOpenAiKey) setOpenAiKey(savedOpenAiKey);
     if (savedGeminiKey) setGeminiKey(savedGeminiKey);
+    if (savedTheme) {
+      setTheme(savedTheme);
+      document.body.classList.toggle("light-theme", savedTheme === "light");
+    }
   }, []);
+
+  const toggleTheme = () => {
+    const nextTheme = theme === "dark" ? "light" : "dark";
+    setTheme(nextTheme);
+    localStorage.setItem("crm_theme", nextTheme);
+    document.body.classList.toggle("light-theme", nextTheme === "light");
+  };
 
   const handleProviderChange = (val: "openai" | "gemini") => {
     setProvider(val);
@@ -313,15 +328,26 @@ export default function Home() {
           <p className="eyebrow">GrowEasy CRM</p>
           <h1>AI CSV Importer</h1>
         </div>
-        <button 
-          className={`icon-button ${showSettings ? "primary" : ""}`} 
-          type="button" 
-          onClick={() => setShowSettings(!showSettings)}
-          title="Configure AI API credentials"
-          aria-label="Toggle settings panel"
-        >
-          <Settings size={18} className={isImporting ? "spin" : ""} />
-        </button>
+        <div style={{ display: "flex", gap: "10px" }}>
+          <button 
+            className="icon-button" 
+            type="button" 
+            onClick={toggleTheme}
+            title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
+            aria-label="Toggle theme"
+          >
+            {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
+          <button 
+            className={`icon-button ${showSettings ? "primary" : ""}`} 
+            type="button" 
+            onClick={() => setShowSettings(!showSettings)}
+            title="Configure AI API credentials"
+            aria-label="Toggle settings panel"
+          >
+            <Settings size={18} className={isImporting ? "spin" : ""} />
+          </button>
+        </div>
       </section>
 
       {showSettings && (

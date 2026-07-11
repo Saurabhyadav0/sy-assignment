@@ -1,6 +1,8 @@
 :root {
   color-scheme: dark;
   --bg: #0b0f17;
+  --bg-solid: #0b0f17;
+  --bg-input: #0f131a;
   --panel: rgba(21, 26, 38, 0.7);
   --panel-strong: rgba(29, 36, 52, 0.85);
   --line: rgba(52, 64, 88, 0.5);
@@ -12,6 +14,24 @@
   --warning: #f59e0b;
   --accent-glow: rgba(16, 185, 129, 0.15);
   --indigo-glow: rgba(99, 102, 241, 0.12);
+}
+
+body.light-theme {
+  color-scheme: light;
+  --bg: #f8fafc;
+  --bg-solid: #f8fafc;
+  --bg-input: #ffffff;
+  --panel: rgba(255, 255, 255, 0.85);
+  --panel-strong: #f1f5f9;
+  --line: rgba(148, 163, 184, 0.3);
+  --text: #0f172a;
+  --muted: #475569;
+  --accent: #10b981;
+  --accent-strong: #047857;
+  --danger: #dc2626;
+  --warning: #d97706;
+  --accent-glow: rgba(16, 185, 129, 0.05);
+  --indigo-glow: rgba(99, 102, 241, 0.04);
 }
 
 * {
@@ -37,14 +57,14 @@ body {
   height: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: #0f121d;
+  background: var(--bg-solid);
 }
 ::-webkit-scrollbar-thumb {
-  background: #272e42;
+  background: var(--line);
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #394460;
+  background: var(--muted);
 }
 
 button {
@@ -303,8 +323,8 @@ th {
   position: sticky;
   top: 0;
   z-index: 1;
-  background: #141b26;
-  color: #e2e8f0;
+  background: var(--panel-strong);
+  color: var(--text);
   font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
@@ -316,7 +336,7 @@ tr:last-child td {
 }
 
 tr:hover td {
-  background: rgba(24, 32, 47, 0.6);
+  background: var(--panel-strong);
 }
 
 .notice,
@@ -414,7 +434,7 @@ tr:hover td {
   padding: 8px 14px;
   border-radius: 8px;
   border: 1px solid var(--line);
-  background: #0f131a;
+  background: var(--bg-input);
   color: var(--text);
   font-family: inherit;
   font-size: 14.5px;
