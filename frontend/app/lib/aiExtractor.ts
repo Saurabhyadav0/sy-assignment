@@ -116,6 +116,55 @@ async function withRetry<T>(fn: () => Promise<T>, attempts = 3): Promise<T> {
   throw lastError;
 }
 
+async function extractBatchGemini(apiKey: string, model: string, batch: Array<{ index: number; row: CsvRecord }>) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+
+  const response = await withRetry(async () => {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        contents: [
+          {
+            role: "user",
+            parts: [
+              {
+                text: `Input rows to process:\n${JSON.stringify({ rows: batch })}`
+              }
+            ]
+          }
+        ],
+        systemInstruction: {
+          parts: [
+            {
+              text: systemPrompt
+            }
+          ]
+        },
+        generationConfig: {
+          temperature: 0,
+          responseMimeType: "application/json"
+        }
+      })
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(`Gemini API error status ${res.status}: ${errText}`);
+    }
+
+    return res;
+  });
+
+  const body = await response.json();
+  const content = body.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!content) throw new Error("Gemini returned an empty response");
+
+  return aiResponseSchema.parse(JSON.parse(content));
+}
+
 async function extractBatch(client: OpenAI, model: string, batch: Array<{ index: number; row: CsvRecord }>) {
   const response = await withRetry(() =>
     client.chat.completions.create({
@@ -140,30 +189,55 @@ async function extractBatch(client: OpenAI, model: string, batch: Array<{ index:
 }
 
 export async function extractLeads(rows: CsvRecord[]) {
-  const apiKey = process.env.OPENAI_API_KEY;
-  const model = process.env.OPENAI_MODEL || "gpt-4.1-mini";
-
-  if (!apiKey) {
-    return { ...extractWithHeuristics(rows), usedAi: false };
-  }
-
-  const client = new OpenAI({
-    apiKey,
-    project: process.env.OPENAI_PROJECT_ID || undefined
-  });
+  const provider = process.env.AI_PROVIDER || (process.env.GEMINI_API_KEY ? "gemini" : "openai");
   const records: CrmRecord[] = [];
   const skipped: SkippedRecord[] = [];
 
-  try {
-    for (const batch of chunkRows(rows)) {
-      const result = await extractBatch(client, model, batch);
-      records.push(...result.records.map(cleanRecord));
-      skipped.push(...result.skipped);
+  if (provider === "gemini") {
+    const apiKey = process.env.GEMINI_API_KEY;
+    const model = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+
+    if (!apiKey) {
+      console.warn("AI_PROVIDER is set to gemini but GEMINI_API_KEY is missing, falling back to heuristics");
+      return { ...extractWithHeuristics(rows), usedAi: false };
     }
 
-    return { records, skipped, usedAi: true };
-  } catch (error) {
-    console.error("AI extraction failed, using fallback extractor", error);
-    return { ...extractWithHeuristics(rows), usedAi: false };
+    try {
+      for (const batch of chunkRows(rows)) {
+        const result = await extractBatchGemini(apiKey, model, batch);
+        records.push(...result.records.map(cleanRecord));
+        skipped.push(...result.skipped);
+      }
+
+      return { records, skipped, usedAi: true };
+    } catch (error) {
+      console.error("Gemini AI extraction failed, using fallback extractor", error);
+      return { ...extractWithHeuristics(rows), usedAi: false };
+    }
+  } else {
+    const apiKey = process.env.OPENAI_API_KEY;
+    const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
+
+    if (!apiKey) {
+      return { ...extractWithHeuristics(rows), usedAi: false };
+    }
+
+    const client = new OpenAI({
+      apiKey,
+      project: process.env.OPENAI_PROJECT_ID || undefined
+    });
+
+    try {
+      for (const batch of chunkRows(rows)) {
+        const result = await extractBatch(client, model, batch);
+        records.push(...result.records.map(cleanRecord));
+        skipped.push(...result.skipped);
+      }
+
+      return { records, skipped, usedAi: true };
+    } catch (error) {
+      console.error("OpenAI AI extraction failed, using fallback extractor", error);
+      return { ...extractWithHeuristics(rows), usedAi: false };
+    }
   }
 }
